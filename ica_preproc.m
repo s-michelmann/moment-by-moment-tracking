@@ -143,6 +143,15 @@ cfg             = [];
 cfg.topolabel   = used_labels;
 cfg.unmixing    = unmixing;
 data_comp       = ft_componentanalysis(cfg, eeg_interp);
+%%
+close all
+
+chi_val = sum(bsxfun(@rdivide, ((bsxfun(@minus,abs(mixing),  mean(abs(mixing),1))).^2), ...
+    mean(abs(mixing),1)),1);
+
+%sort the chi-square values and keep track of the sorting-indices
+[chisort, s_indices] = sort(chi_val, 'descend');
+
 
 %% plot again the mixing matrix(topography) with components sorted by broadness
 figure
