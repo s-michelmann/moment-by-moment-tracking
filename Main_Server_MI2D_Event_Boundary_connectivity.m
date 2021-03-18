@@ -1,16 +1,29 @@
 function Main_Server_MI2D_Event_Boundary_connectivity(nr, trial_idx)
+% this code needs to run on the server. for a given subject it computes the
+% conditional mutual information between CPR channels and a given channels
+% activity in different freq bands. 
+% @trial_idx is either run 1 or run 2. The patterns at channel are all 
+% bands and raw signal the CPR pattern is the high-gamma data
+% (this is where the CPR effect comes from ) The condition is on the zero 
+% lag pattern. This accounts for volume conduction. 
+
+% depends on Robin Ince's MI toolbox (function: gccmi_ccc) 
 
 sjs = [''; ''; '';''; ''; ''; ''; ''; '']; % codes removed for sharing
 code_ = sjs(nr,:);
 
 
-
+% these are the event boundary times
 load('ptimes_s.mat');
+
+% this is the CPR data
 load('all_models.mat');
+
 addpath(genpath('gcmi-master'));
 addpath('fieldtrip');
 ft_defaults;
 % cd(code_);
+% loading precomputed data (power filtered in frequency band or raw)
 load(fullfile(code_, 'eeg_aall.mat'));
 load(fullfile(code_, 'eeg_all.mat'));
 load(fullfile(code_, 'eeg_ball.mat'));
@@ -22,6 +35,7 @@ load(fullfile(code_, 'eeg_mi1.mat'));
 load(fullfile(code_, 'eeg_mi2.mat'));
 load(fullfile(code_, 'eeg_tall.mat'));
 
+%get this subjects hippocampal channels
 fid = fopen([code_ filesep 'HC_channels.tsv'], 'r');
 txt = textscan(fid, '%s', 'delimiter', '\t', 'Headerlines', 0);
 fclose all   ;
@@ -29,7 +43,7 @@ fclose all   ;
 % define the window of possible lags (-2.5s to +2.5s)
 window_width_lag = 5*eeg_hgeff.fsample;
 window_width_shift = 6*eeg_hgeff.fsample;
-% define the window with to compute mutual information across
+% define the window with to compute mutual information across (1 second)
 window_width_small = eeg_hgeff.fsample;
 
 sampling_rate = all_models{1}.fsample;
@@ -42,6 +56,8 @@ try
 eeg_mi1  = rmfield(eeg_mi1, 'sampleinfo');
 catch
 end
+
+% set up a data structure to collect the data
 for tt = 1 : window_width_shift + 1
     eeg_mi1.trial{tt} = zeros(numel(txt{1}), ...
         window_width_lag+1);
@@ -53,23 +69,9 @@ for tt = 1 : window_width_shift + 1
 end
 eeg_mi1.label = txt{1};
 eeg_mi2.label = txt{1};
-rng(rand_nr);
-%
-% % resize the boundary time course to the EEG SR
-% tc2 = imresize(rand_tc, [1 45000]);
-% % select only the times from 0(interp = 0.002?) to end
-% tc2 = tc2(:, 1:length(all_models{nr}.time{1}));
-% padding to exclude peaks around the bounds!
-pad_sec = 3;
 
 
-time_pick = true(size(all_models{nr}.time{1}));
-time_pick(1:(sampling_rate*pad_sec)) = 0;
-time_pick(end-(sampling_rate*pad_sec-1):end) = 0;
-
-all_time_s =  all_models{nr}.time{1}(time_pick);
-
-
+% pick the corresponding trial
 eeg_hg2.trial =  eeg_hgall.trial(trial_idx); % = ft_selectdata(cfg, eeg_hgall);
 eeg_lg2.trial =  eeg_lgall.trial(trial_idx); % = = ft_selectdata(cfg, eeg_lgall);
 eeg_b2.trial =  eeg_ball.trial(trial_idx); % = = ft_selectdata(cfg, eeg_ball);
@@ -87,7 +89,8 @@ eeg_t2.time =  eeg_tall.time(trial_idx); % = = ft_selectdata(cfg, eeg_tall);
 eeg_d2.time =  eeg_dall.time(trial_idx); % = = ft_selectdata(cfg, eeg_dall);
 eeg_2.time =  eeg_all.time(trial_idx); % =  = ft_selectdata(cfg, eeg_all);
 eeg_hgeff2.time =  eeg_hgeff.time(trial_idx); % = = ft_selectdata(cfg, eeg_hgeff);
-   
+  
+% set up a parpool
 delete(gcp('nocreate'))
 
 parpool('local',16)
@@ -107,7 +110,7 @@ for cc = 1 : numel(eeg_hgall.label)
 
     sigAll = [];
     sigEff = [];
-    % loop through all the peak times
+    % loop through all the peak times (i.e. event boundaries)
     for pp = 1 : numel(ptimes_s)
 
         %current peak time
@@ -166,7 +169,8 @@ for cc = 1 : numel(eeg_hgall.label)
         Ownshift = sigAll(:, llg + window_width_lag/2+1:...
             llg + window_width_lag/2+ window_width_small+1,:);
         Efflag = sigEff(:,llg+1:llg+window_width_small+1,:);
-        warning off
+        warning off % you get warnings at zero lag, because 
+        % the conditional MI conditioned on the signal itself is not computable
 
         % now loop through all lags from -window_width/2 to
         % +window_width/2
@@ -210,10 +214,10 @@ end
 
 
 if trial_idx == 1
-    save(fullfile(code_, ['2DMIaround_Boundaries'  num2str(rand_nr) '.mat']), 'eeg_mi1', '-v7.3');
+    save(fullfile(code_, ['2DMIaround_Boundaries.mat']), 'eeg_mi1', '-v7.3');
 
 else
-    save(fullfile(code_, ['2DMIaround_Boundaries'  num2str(rand_nr) '.mat']), 'eeg_mi2', '-v7.3');
+    save(fullfile(code_, ['2DMIaround_Boundaries.mat']), 'eeg_mi2', '-v7.3');
 
 end
 end

@@ -31,14 +31,9 @@ for ss = 1 : size(sjs, 1)
         'sub-' code_ ];
     deriv_pth3 = [data_pth_ 'derivatives' filesep 'mi', filesep ...
         'sub-' code_ ];
-    
-    %load(fullfile(deriv_pth2, ['CrossRunInclAudio_gamma70_200Hz_ManualICAnotchMO50max.mat']));
+
     load(fullfile(deriv_pth2, ['CrossRunInclAudio_gamma70_200Hz_ManualICAnotchMO50max_interpGammaSpike.mat']));
-    try
-        load(fullfile(deriv_pth3, ['MI_power_toHC.mat']));
-    catch
-        eeg_mi = [];
-    end
+
     all_dat = cat(1,all_dat, model_eeg.effect);
     all_models{ss} = model_eeg;
     all_mis{ss} = eeg_mi;
@@ -56,6 +51,7 @@ P = posterior(GMModel,all_eff);
 [mu1, small_modelidx]  = min(GMModel.mu);
 [mu2, big_modelidx]  = max(GMModel.mu);
 
+% this is for the selection, the rest is just for plotting
 selB = ((P(:, big_modelidx) ./ P(:,small_modelidx))>10)& (all_eff>0);
 
 selA = ~selB;
@@ -86,7 +82,7 @@ xlim([-max(all_eff), max(all_eff)])
 %ylim([0 max(y)+1000]);
 line([min(all_eff(selB)),min(all_eff(selB))], [min(all_eff(selB)), 0.02], 'LineStyle', '--', 'LineWidth', 2, 'Color', [198 0 27]./255);
 
-
+% the threshold is the smallest value that has an effect
 electrode_selection_threshold = min(all_eff(selB));
 
 hold on
