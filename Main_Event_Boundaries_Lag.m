@@ -54,7 +54,7 @@ set(gca,'FontSize',20)
 %%
 
 close all
-[C, LAG] = xcorr(mean(dts2),  mean(dts1), 'coeff');
+[C, LAG] = xcorr(mean(dts2)-mean(mean(dts2)),  mean(dts1-mean(mean(dts2))), 'coeff');
 
 [mm, ind] = max(C)
 LAG(ind)
@@ -78,7 +78,11 @@ for rr = 1 : rand_N
     dts_both = dts_both(randperm(size(dts_both, 1))',:);
     dts2r = dts_both(1:size(dts2,1), :);
     dts1r = dts_both(size(dts1,1)+1 : end, :);
-    [C, LAG] = xcorr(mean(dts2r),  mean(dts1r));
+    
+    d1 = mean(dts1r);
+    d2 = mean(dts2r);
+    [C, LAG] = xcorr(d2-mean(d2), d1-  mean(d1));
+    
     % figure;
     % plot(LAG, C)
     [mm, ind] = max(C);
