@@ -142,6 +142,44 @@ tc1 = tmp1(1:length(model_eeg.time{1}));
 tc2 = tmp2(1:length(model_eeg.time{1}));
 bth = (tmp1(1:length(model_eeg.time{1}))'+tmp2(1:length(model_eeg.time{1}))')./2;
 dff = (tmp1(1:length(model_eeg.time{1}))'-tmp2(1:length(model_eeg.time{1}))');
+
+%%
+% the locking CPR to event boundaries
+
+load([data_pth_ filesep 'sourcedata' filesep 'e2times205_sel.mat'])
+bb_trials = [];
+for bb = 1 : numel(e2times)
+    bb_trials = [bb_trials;
+        md(nearest(model_eeg.time{1}, e2times(bb)/1000)-600:...
+        nearest(model_eeg.time{1}, e2times(bb)/1000)+600)'];
+end
+shadedErrorBar([-6000:10:6000], mean(bb_trials), std(bb_trials)./sqrt(19));
+
+% now with random boundaries:
+n_rand = 100000;
+n_bounds =  19 %30 for appeal:
+bb_trials_r = nan([size(bb_trials), n_rand]);
+for rr = 1: n_rand
+    rr
+    e2timesr = randi([6010,10*length(md)-6010],n_bounds,1);
+    for bb = 1 : numel(e2timesr)
+        bb_trials_r(bb,:,rr) = md(nearest(model_eeg.time{1}, ...
+            e2timesr(bb)/1000)-600:...
+            nearest(model_eeg.time{1}, e2timesr(bb)/1000)+600)';
+    end
+end
+rand_means = squeeze(mean(bb_trials_r))';
+p_arr = (sum(abs(rand_means)> mean(bb_trials)))./n_rand;
+
+shadedErrorBar([-6000:10:6000], mean(bb_trials), std(bb_trials)./sqrt(n_bounds));
+hold on;
+pu = prctile(squeeze(mean(bb_trials_r))', 95);
+pl = prctile(squeeze(mean(bb_trials_r))', 5);
+av = mean(squeeze(mean(bb_trials_r))');
+shadedErrorBar([-6000:10:6000],...
+     av, [pu-av; -pl+av],'lineprops',{'color', [207 218 230]./255});
+
+
 %% cross correlation with avg. event boundaryness
 n_rand = 1000;
 

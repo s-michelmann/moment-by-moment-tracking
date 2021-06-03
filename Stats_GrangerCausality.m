@@ -1,5 +1,4 @@
-% BUGFIX TODO: electrode_selection_threshold needs to be >= now it is >
-% therefore: replot the 1) video, 2) time courses 3) electrode 4).. etc
+
 clear;
 clc;
 username = char(java.lang.System.getProperty('user.name'));

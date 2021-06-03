@@ -672,7 +672,7 @@ for roi_ = 18 %:18; %18 is HC
     
 end
 %% NOW do the big stats HC2>HC1 & HC2>OTHER2 & HC2-1>Other2-1 & HC2>HCshuffled & HC2-HC1 > HC2shuffled-HC1shuffled
-roi_indices = label_nr == roi_;
+roi_indices = label_nr == roi_; % roi is hippocampus, no other roi shows this effect!
 
 % test HC vs. other again and fdr correct
 [H, p2 , CI, stats] = ttest2(data_all2(find(roi_indices),:),...

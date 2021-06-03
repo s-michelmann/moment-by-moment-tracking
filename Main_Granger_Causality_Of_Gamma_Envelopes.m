@@ -224,7 +224,9 @@ for ss = 1 : size(sjs, 1)
     % (almost dead electrodes) in a single subject. Those electrodes 
     % could also be excluded but interpolation improves overall result, so 
     % that's preferred. Other frequencies don't show results, using raw 
-    % data seems to be a weaker version of the gamma result.
+    % data seems to be a weaker version of the gamma result... But note
+    % supplementary information for different frequencies under different
+    % sampling rates that were done for the reviews
     save(fullfile(deriv_pth2, ['CrossRunInclAudio_gamma70_200Hz_ManualICAnotchMO50max_interpGammaSpike.mat']), 'model_eeg');
     
 end
